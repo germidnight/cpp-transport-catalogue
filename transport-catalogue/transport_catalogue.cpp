@@ -17,7 +17,7 @@ namespace catalogue {
         stop_names_[stops_.back().name] = &stops_.back();
     }
 
-    void TransportCatalogue::AddBus(std::string_view bus_name, std::vector<std::string_view> stops) {
+    void TransportCatalogue::AddBus(std::string_view bus_name, const std::vector<std::string_view>& stops) {
         Bus bus;
         bus.length = 0;
         bus.name = std::string(bus_name);

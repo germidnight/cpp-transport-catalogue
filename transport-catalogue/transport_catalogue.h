@@ -75,7 +75,7 @@ namespace catalogue {
     public:
         void AddStop(std::string_view stop_name, double latitude, double longitude);
 
-        void AddBus(std::string_view bus_name, std::vector<std::string_view> stops);
+        void AddBus(std::string_view bus_name, const std::vector<std::string_view> &stops);
 
         Stop FindStop(const std::string_view stop_name) const;
 

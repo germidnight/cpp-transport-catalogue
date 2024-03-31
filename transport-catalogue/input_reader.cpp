@@ -129,5 +129,15 @@ void InputReader::ApplyCommands([[maybe_unused]] TransportCatalogue &catalogue) 
         catalogue.AddBus(commands_[i].id, ParseRoute(commands_[i].description));
     }
 }
+
+void InputReader::FillTransportCatalogue(std::istream& input, int base_request_count, TransportCatalogue& catalogue) {
+    for (int i = 0; i < base_request_count; ++i) {
+        std::string line;
+        std::getline(input, line);
+        ParseLine(line);
+    }
+    ApplyCommands(catalogue);
+}
+
 } // конец namespace input_reader
 } // конец namespace transport

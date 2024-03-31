@@ -42,7 +42,16 @@ void ParseAndPrintStat(const TransportCatalogue &transport_catalogue, std::strin
             output << "Stop "s << name << ": not found"s << std::endl;
         }
     }
-
 }
+
+void ProcessRequests2Catalogue(std::istream& input, std::ostream& output, int stat_request_count,
+                                const TransportCatalogue& catalogue) {
+    for (int i = 0; i < stat_request_count; ++i) {
+        std::string line;
+        std::getline(input, line);
+        ParseAndPrintStat(catalogue, line, output);
+    }
+}
+
 } // конец namespace stat_reader
 } // конец namespace transport

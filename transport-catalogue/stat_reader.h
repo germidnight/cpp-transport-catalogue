@@ -32,5 +32,9 @@ namespace stat_reader {
 
 void ParseAndPrintStat(const TransportCatalogue &transport_catalogue, std::string_view request,
                        std::ostream &output);
+
+void ProcessRequests2Catalogue(std::istream &input, std::ostream &output, int stat_request_count,
+                                const TransportCatalogue &transport_catalogue);
+
 } // конец namespace stat_reader
 } // конец namespace transport
