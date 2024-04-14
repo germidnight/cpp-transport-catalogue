@@ -28,9 +28,53 @@ Coordinates ParseCoordinates(std::string_view str) {
     auto not_space2 = str.find_first_not_of(' ', comma + 1);
 
     double lat = std::stod(std::string(str.substr(not_space, comma - not_space)));
-    double lng = std::stod(std::string(str.substr(not_space2)));
+
+    comma = str.find(',', not_space2);
+    double lng;
+    if(comma != str.npos) {
+        lng = std::stod(std::string(str.substr(not_space2, comma - not_space2)));
+    } else {
+        lng = std::stod(std::string(str.substr(not_space2)));
+    }
 
     return {lat, lng};
+}
+
+/**
+ * Разбирает строку вида "55.595884, 37.209755, 9900m to Rasskazovka, 100m to Marushkino"
+ * Возвращает вектор пар: <Имя остановки, расстояние до остановки>
+ */
+std::vector<std::pair<std::string, size_t>> ParseDistancesToStop(std::string_view str) {
+    using namespace std::string_literals;
+
+    const std::string dist_delim = "m to"s;
+    std::string stop_name_to;
+    std::vector<std::pair<std::string, size_t>> result;
+
+    size_t comma = str.find(',');
+    comma = str.find(',', comma + 1);
+    size_t not_space = comma;
+    while(not_space != str.npos) {
+        not_space = str.find_first_not_of(' ', comma + 1);
+        size_t next_pos = str.find(dist_delim, not_space);
+        size_t distance = std::stoul(std::string(str.substr(not_space, next_pos - not_space)));
+
+        if(next_pos != str.npos) {
+            not_space = str.find_first_not_of(' ', next_pos + dist_delim.size());
+        } else {
+            not_space = next_pos;
+            break;
+        }
+        comma = str.find(',', not_space);
+        if(comma != str.npos) {
+            stop_name_to = std::string(str.substr(not_space, comma - not_space));
+        } else {
+            stop_name_to = std::string(str.substr(not_space));
+        }
+        result.push_back({stop_name_to, distance});
+        not_space = comma;
+    }
+    return result;
 }
 
 /**
@@ -112,17 +156,22 @@ void InputReader::ParseLine(std::string_view line) {
 
 void InputReader::ApplyCommands([[maybe_unused]] TransportCatalogue &catalogue) const {
     size_t idx = 0;
-    std::vector<size_t> bus_cmd_idxs;
+    std::vector<size_t> bus_cmd_idxs, dist_cmd_idxs;
 
     for(auto& cmd : commands_) {
         if(cmd.command == "Stop") {
-            Coordinates coord = ParseCoordinates(cmd.description);
+            auto coord = ParseCoordinates(cmd.description);
             catalogue.AddStop(std::move(cmd.id), coord.lat, coord.lng);
+            dist_cmd_idxs.push_back(idx);
         }
         if(cmd.command == "Bus") {
             bus_cmd_idxs.push_back(idx);
         }
-        idx++;
+        ++idx;
+    }
+
+    for (size_t i : dist_cmd_idxs) {
+        catalogue.AddStopDistances(commands_[i].id, std::move(ParseDistancesToStop(commands_[i].description)));
     }
 
     for(size_t i : bus_cmd_idxs) {

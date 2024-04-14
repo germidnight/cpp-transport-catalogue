@@ -24,7 +24,8 @@ void ParseAndPrintStat(const TransportCatalogue &transport_catalogue, std::strin
         if(bus_stat.name != ""s) {
             output << std::setprecision(6)
                    << "Bus "s << bus_stat.name << ": "s << bus_stat.stops_num << " stops on route, "s
-                   << bus_stat.uniq_stops_num << " unique stops, "s << bus_stat.length << " route length"s << std::endl;
+                   << bus_stat.uniq_stops_num << " unique stops, "s << static_cast<double>(bus_stat.distance) << " route length, "s
+                   << bus_stat.curvature << " curvature" << std::endl;
         } else {
             output << "Bus "s << name << ": not found"s << std::endl;
         }
