@@ -160,8 +160,7 @@ void InputReader::ApplyCommands([[maybe_unused]] TransportCatalogue &catalogue) 
 
     for(auto& cmd : commands_) {
         if(cmd.command == "Stop") {
-            auto coord = ParseCoordinates(cmd.description);
-            catalogue.AddStop(std::move(cmd.id), coord.lat, coord.lng);
+            catalogue.AddStop(std::move(cmd.id), ParseCoordinates(cmd.description));
             dist_cmd_idxs.push_back(idx);
         }
         if(cmd.command == "Bus") {
@@ -171,7 +170,10 @@ void InputReader::ApplyCommands([[maybe_unused]] TransportCatalogue &catalogue) 
     }
 
     for (size_t i : dist_cmd_idxs) {
-        catalogue.AddStopDistances(commands_[i].id, std::move(ParseDistancesToStop(commands_[i].description)));
+        auto dist2stop = ParseDistancesToStop(commands_[i].description);
+        for(auto& d2s : dist2stop) {
+            catalogue.AddStopDistances(commands_[i].id, d2s.first, d2s.second);
+        }
     }
 
     for(size_t i : bus_cmd_idxs) {
