@@ -1,24 +1,28 @@
-/*
- * Разработать систему хранения транспортных маршрутов и обработки запросов к ней.
- * Сначала на вход подаются запросы на создание базы данных, затем — запросы к самой базе.
- */
+#include "json.h"
+#include "json_reader.h"
+#include "map_renderer.h"
+#include "request_handler.h"
 
 #include <iostream>
 
-#include "input_reader.h"
-#include "stat_reader.h"
+using namespace transport;
 
 int main() {
-    transport::catalogue::TransportCatalogue catalogue;
+    // Считать JSON из stdin
+    json::Document document = json::Load(std::cin);
 
-    int base_request_count;
-    std::cin >> base_request_count >> std::ws;
-    {
-        transport::input_reader::InputReader reader;
-        reader.FillTransportCatalogue(std::cin, base_request_count, catalogue);
-    }
+    // Построить на основе JSON базу данных транспортного справочника
+    catalogue::TransportCatalogue catalogue;
+    json_reader::JsonReader fill_catalogue;
+    fill_catalogue.FillTransportCatalogue(document, catalogue);
 
-    int stat_request_count;
-    std::cin >> stat_request_count >> std::ws;
-    transport::stat_reader::ProcessRequests2Catalogue(std::cin, std::cout, stat_request_count, catalogue);
+    // считать настройки построения карты
+    const map_renderer::RenderSettings settings = fill_catalogue.FillRenderSettings(document);
+
+    // Выполнить запросы к справочнику, находящиеся в массиве "stat_requests", построив JSON-массив
+    const std::vector<json_reader::StatRequest> &stat_requests = fill_catalogue.FillStatRequests(document);
+
+    request_handler::RequestHandler req_hndlr(stat_requests, catalogue, settings);
+
+    json::Print(req_hndlr.GetStatistics(), std::cout);
 }
