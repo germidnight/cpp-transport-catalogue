@@ -81,12 +81,12 @@ namespace transport {
             using namespace catalogue;
 
             all_stop_names_ = catalogue_.GetAllStopNames();
-            std::sort(all_stop_names_->begin(), all_stop_names_->end());
+            std::sort(all_stop_names_.begin(), all_stop_names_.end());
 
             std::vector<geo::Coordinates> all_coords;
-            all_coords.reserve(all_stop_names_->size());
+            all_coords.reserve(all_stop_names_.size());
 
-            for (auto it = all_stop_names_->begin(); it != all_stop_names_->end(); ++it) {
+            for (auto it = all_stop_names_.begin(); it != all_stop_names_.end(); ++it) {
                 const Stop* stop = catalogue_.FindStop(*it);
                 if (stop != nullptr) {
                     all_coords.emplace_back(stop->location);
@@ -98,7 +98,7 @@ namespace transport {
                     };
 
             all_bus_names_ = catalogue_.GetAllBusNames();
-            std::sort(all_bus_names_->begin(), all_bus_names_->end());
+            std::sort(all_bus_names_.begin(), all_bus_names_.end());
 
             DrawBusLines(projector);
             DrawBusNames(projector);
@@ -115,7 +115,7 @@ namespace transport {
             size_t color_idx = 0;
             const size_t palette_color_last = draw_settings_.color_palette.size() - 1;
 
-            for (auto it = all_bus_names_->begin(); it != all_bus_names_->end(); ++it) {
+            for (auto it = all_bus_names_.begin(); it != all_bus_names_.end(); ++it) {
                 const Bus *bus = catalogue_.FindBus(*it);
                 if (!bus->stops.empty()) { // Линии маршрутов, на которых нет остановок, рисоваться не должны.
                     svg::Polyline polyline;
@@ -142,7 +142,7 @@ namespace transport {
             size_t color_idx = 0;
             const size_t palette_color_last = draw_settings_.color_palette.size() - 1;
 
-            for (auto it = all_bus_names_->begin(); it != all_bus_names_->end(); ++it) {
+            for (auto it = all_bus_names_.begin(); it != all_bus_names_.end(); ++it) {
                 const Bus *bus = catalogue_.FindBus(*it);
                 if (!bus->stops.empty()) { // Маршруты, на которых нет остановок, рисоваться не должны.
                     svg::Text bus_text;
@@ -189,7 +189,7 @@ namespace transport {
             circle.SetFillColor("white"s);
             circle.SetRadius(draw_settings_.stop_radius);
 
-            for (auto it = all_stop_names_->begin(); it != all_stop_names_->end(); ++it) {
+            for (auto it = all_stop_names_.begin(); it != all_stop_names_.end(); ++it) {
                 const Stop *stop = catalogue_.FindStop(*it);
                 if(stop != nullptr) {
                     map_picture_.Add(svg::Circle{circle}.SetCenter(projector(stop->location)));
@@ -206,7 +206,7 @@ namespace transport {
             stop_text.SetFontSize(static_cast<uint32_t>(draw_settings_.stop_label_font_size));
             stop_text.SetFontFamily("Verdana"s);
 
-            for (auto it = all_stop_names_->begin(); it != all_stop_names_->end(); ++it) {
+            for (auto it = all_stop_names_.begin(); it != all_stop_names_.end(); ++it) {
                 const Stop *stop = catalogue_.FindStop(*it);
                 if (stop != nullptr) {
                     stop_text.SetPosition(projector(stop->location));

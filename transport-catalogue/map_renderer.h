@@ -3,8 +3,6 @@
 #include "svg.h"
 #include "transport_catalogue.h"
 
-#include <memory>
-
 namespace transport {
     namespace map_renderer {
 
@@ -39,8 +37,8 @@ namespace transport {
             const catalogue::TransportCatalogue &catalogue_;
             const RenderSettings &draw_settings_;
             svg::Document map_picture_;
-            std::unique_ptr<std::vector<std::string>> all_stop_names_; // отсортированный список остановок, через которые проходят маршруты
-            std::unique_ptr<std::vector<std::string>> all_bus_names_;  // отсортированный список маршрутов
+            std::vector<std::string> all_stop_names_; // отсортированный список остановок, через которые проходят маршруты
+            std::vector<std::string> all_bus_names_;  // отсортированный список маршрутов
         };
 
     } // namespace map_renderer

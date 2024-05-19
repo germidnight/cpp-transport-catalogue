@@ -33,10 +33,9 @@
 namespace transport {
     namespace catalogue {
 
-        enum class FindStopResult {
-            FOUND,
-            NOT_FOUND,
-            EMPTY
+        struct DistanceBetweenStops {
+            double geographic;
+            size_t measured;
         };
 
         class TransportCatalogue {
@@ -60,11 +59,11 @@ namespace transport {
 
             std::optional<BusStatistics> GetBusStatistics(const std::string_view bus_name) const;
 
-            std::pair<FindStopResult, std::vector<std::string>> GetStopStatistics(const std::string_view stop_name) const;
+            std::optional<std::vector<std::string>> GetStopStatistics(const std::string_view stop_name) const;
 
-            std::unique_ptr<std::vector<std::string>> GetAllStopNames() const;
+            std::vector<std::string> GetAllStopNames() const;
 
-            std::unique_ptr<std::vector<std::string>> GetAllBusNames() const;
+            std::vector<std::string> GetAllBusNames() const;
 
         private:
             std::deque<Stop> stops_;
@@ -75,7 +74,7 @@ namespace transport {
             std::unordered_map<std::string_view, std::unordered_set<std::string>> buses_for_stop_;
             std::unordered_map<std::pair<Stop *, Stop *>, size_t, StopPointerHasher> stops_dist_; // расстояние между остановками: остановка "откуда", остановка "куда"
 
-            std::pair<double, size_t> CalculateTotalDistance(const Bus *bus) const; // возвращает длины маршрута: по географическим координатам и по расстояниям между остановками
+            DistanceBetweenStops CalculateTotalDistance(const Bus *bus) const; // возвращает длины маршрута: по географическим координатам и по расстояниям между остановками
         };
     } // конец namespace catalogue
 } // конец namespace transport

@@ -65,8 +65,8 @@ namespace transport {
             if (bus != nullptr) {
                 if (bus->bus_stat.length == 0) {
                     const auto res = CalculateTotalDistance(bus);
-                    bus->bus_stat.length = res.first;
-                    bus->bus_stat.distance = res.second;
+                    bus->bus_stat.length = res.geographic;
+                    bus->bus_stat.distance = res.measured;
                     bus->bus_stat.curvature = static_cast<double>(bus->bus_stat.distance) / bus->bus_stat.length;
                     bus->bus_stat.stops_num = bus->stops.size();
 
@@ -81,7 +81,7 @@ namespace transport {
             return std::nullopt;
         }
 
-        std::pair<double, size_t> TransportCatalogue::CalculateTotalDistance(const Bus *bus) const {
+        DistanceBetweenStops TransportCatalogue::CalculateTotalDistance(const Bus *bus) const {
             using namespace geo;
 
             double length = 0;
@@ -110,7 +110,7 @@ namespace transport {
             return {length, distance};
         }
 
-        std::pair<FindStopResult, std::vector<std::string>> TransportCatalogue::GetStopStatistics(const std::string_view stop_name) const {
+        std::optional<std::vector<std::string>> TransportCatalogue::GetStopStatistics(const std::string_view stop_name) const {
             std::vector<std::string> buses;
             if (FindStop(stop_name) != nullptr) {
                 if (buses_for_stop_.count(stop_name) > 0) {
@@ -118,16 +118,14 @@ namespace transport {
                         buses.push_back(std::string(bus));
                     }
                     std::sort(buses.begin(), buses.end());
-                    return std::make_pair(FindStopResult::FOUND, buses);
-                } else {
-                    return std::make_pair(FindStopResult::EMPTY, buses);
                 }
+                return buses;
             }
-            return std::make_pair(FindStopResult::NOT_FOUND, buses);
+            return std::nullopt;
         }
 
         /* Перебираем все остановки и наполняем вектор имён всех остановок с маршрутами */
-        std::unique_ptr<std::vector<std::string>> TransportCatalogue::GetAllStopNames() const {
+        std::vector<std::string> TransportCatalogue::GetAllStopNames() const {
             std::vector<std::string> all_stop_names;
             all_stop_names.reserve(stops_.size());
             for(const Stop& stop : stops_) {
@@ -135,17 +133,17 @@ namespace transport {
                     all_stop_names.emplace_back(stop.name);
                 }
             }
-            return std::make_unique<std::vector<std::string>>(std::move(all_stop_names));
+            return all_stop_names;
         }
 
         /* Перебираем все маршруты и наполняем вектор имён всех маршрутов */
-        std::unique_ptr<std::vector<std::string>> TransportCatalogue::GetAllBusNames() const {
+        std::vector<std::string> TransportCatalogue::GetAllBusNames() const {
             std::vector<std::string> all_bus_names;
             all_bus_names.reserve(buses_.size());
             for(const Bus &bus : buses_) {
                 all_bus_names.emplace_back(bus.name);
             }
-            return std::make_unique<std::vector<std::string>>(std::move(all_bus_names));
+            return all_bus_names;
         }
     } // конец namespace catalogue
 } // конец namespace transport

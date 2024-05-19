@@ -58,32 +58,26 @@ namespace transport {
             using namespace json;
             using namespace json_reader;
 
-            std::pair<FindStopResult, std::vector<std::string>> stop_info = catalogue_.GetStopStatistics(req.name);
-            switch (stop_info.first) {
-            case FindStopResult::EMPTY: {
+            std::optional<std::vector<std::string>> stop_info = catalogue_.GetStopStatistics(req.name);
+
+            if (!stop_info.has_value()) {
+                answer_arr.emplace_back(Dict{
+                    {request_id_, req.id},
+                    {error_, error_string_},
+                });
+            } else if (stop_info.value().empty()) {
                 Array buses_empty;
                 answer_arr.emplace_back(Dict{
                     {stop_buses, buses_empty},
                     {request_id_, req.id}});
-                break;
-            }
-            case FindStopResult::FOUND: {
+            } else {
                 Array buses;
-                for (const std::string &bus : stop_info.second) {
+                for (const std::string &bus : stop_info.value()) {
                     buses.emplace_back(bus);
                 }
                 answer_arr.emplace_back(Dict{
                     {stop_buses, buses},
                     {request_id_, req.id}});
-                break;
-            }
-            case FindStopResult::NOT_FOUND: {
-                answer_arr.emplace_back(Dict{
-                    {request_id_, req.id},
-                    {error_, error_string_},
-                });
-                break;
-            }
             }
         }
 
