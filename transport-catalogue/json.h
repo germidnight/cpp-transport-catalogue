@@ -54,6 +54,7 @@ namespace json {
 
     class Node final {
     public:
+        friend class Builder;
         using Value = std::variant<std::nullptr_t, Array, Dict, bool, int, double, std::string>;
 
         Node() = default;
@@ -86,14 +87,14 @@ namespace json {
         bool IsString() const;
         bool IsNull() const;
         bool IsArray() const;
-        bool IsMap() const;
+        bool IsDict() const;
 
         int AsInt() const;
         bool AsBool() const;
         double AsDouble() const;
         const std::string &AsString() const;
         const Array &AsArray() const;
-        const Dict &AsMap() const;
+        const Dict &AsDict() const;
 
         const Value &GetValue() const {
             return value_;
@@ -103,6 +104,10 @@ namespace json {
         }
 
     private:
+        Value &GetValue() {
+            return value_;
+        }
+
         Value value_;
     };
 

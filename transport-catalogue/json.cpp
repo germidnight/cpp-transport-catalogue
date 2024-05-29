@@ -296,7 +296,7 @@ namespace json {
     bool Node::IsArray() const {
         return std::holds_alternative<Array>(value_);
     }
-    bool Node::IsMap() const {
+    bool Node::IsDict() const {
         return std::holds_alternative<Dict>(value_);
     }
 
@@ -337,11 +337,11 @@ namespace json {
             throw std::logic_error("Not Array");
         }
     }
-    const Dict &Node::AsMap() const {
-        if (IsMap()) {
+    const Dict &Node::AsDict() const {
+        if (IsDict()) {
             return std::get<Dict>(value_);
         } else {
-            throw std::logic_error("Not Map");
+            throw std::logic_error("Not Dict");
         }
     }
 
@@ -414,7 +414,7 @@ namespace json {
         out << "{\n"sv;
         auto next_ctx = ctx.Indented();
 
-        for (const auto& [key, node] : value) {
+        for (const auto &[key, node] : value) {
             if (!first_time) {
                 out << ",\n"sv;
             } else {

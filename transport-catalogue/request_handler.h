@@ -81,6 +81,7 @@
  */
 
 #include "json.h"
+#include "json_builder.h"
 #include "json_reader.h"
 #include "transport_catalogue.h"
 
@@ -99,9 +100,9 @@ namespace transport {
             json::Document GetStatistics();
 
         private:
-            void BusStatRequest(const json_reader::StatRequest &req, json::Array &answer_arr);
-            void StopStatRequest(const json_reader::StatRequest &req, json::Array &answer_arr);
-            void MapStatRequest(const json_reader::StatRequest &req, json::Array &answer_arr);
+            void BusStatRequest(const json_reader::StatRequest &, json::Builder &);
+            void StopStatRequest(const json_reader::StatRequest &, json::Builder &);
+            void MapStatRequest(const json_reader::StatRequest &, json::Builder &);
 
             const std::vector<json_reader::StatRequest> requests_;
             const catalogue::TransportCatalogue &catalogue_;
@@ -114,7 +115,7 @@ namespace transport {
             const std::string error_string_ = "not found";
 
             const std::string stop_type_ = "Stop";
-            const std::string stop_buses = "buses";
+            const std::string stop_buses_ = "buses";
 
             const std::string bus_type_ = "Bus";
             const std::string bus_curvature_ = "curvature";
@@ -123,7 +124,7 @@ namespace transport {
             const std::string bus_stop_unique_ = "unique_stop_count";
 
             const std::string map_type_ = "Map";
-            const std::string map_answer = "map";
+            const std::string map_answer_ = "map";
         };
 
     } // namespace request_handler
