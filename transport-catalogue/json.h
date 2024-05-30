@@ -87,14 +87,14 @@ namespace json {
         bool IsString() const;
         bool IsNull() const;
         bool IsArray() const;
-        bool IsDict() const;
+        bool IsMap() const;
 
         int AsInt() const;
         bool AsBool() const;
         double AsDouble() const;
         const std::string &AsString() const;
         const Array &AsArray() const;
-        const Dict &AsDict() const;
+        const Dict &AsMap() const;
 
         const Value &GetValue() const {
             return value_;
@@ -107,7 +107,6 @@ namespace json {
         Value &GetValue() {
             return value_;
         }
-
         Value value_;
     };
 

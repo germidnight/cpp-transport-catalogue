@@ -61,7 +61,6 @@ namespace json {
     struct ArrayItemContext;
     struct KeyContext;
     struct DictValueContext;
-    struct ArrayValueContext;
 
     class Builder {
     public:
@@ -118,11 +117,12 @@ namespace json {
     };
 
     /*За вызовом StartArray следует не Value, не StartDict, не StartArray и не EndArray.*/
+    /*После вызова StartArray и серии Value следует не Value, не StartDict, не StartArray и не EndArray.*/
     struct ArrayItemContext : BaseContext {
         ArrayItemContext(Builder &builder) : BaseContext(builder) {}
 
         KeyContext Key(std::string key) = delete;
-        ArrayValueContext Value(Node::Value value);
+        ArrayItemContext Value(Node::Value value);
         // DictItemContext StartDict() = delete;
         Builder& EndDict() = delete;
         // ArrayItemContext StartArray() = delete;
@@ -153,19 +153,6 @@ namespace json {
         // Builder& EndDict() = delete;
         ArrayItemContext StartArray() = delete;
         Builder &EndArray() = delete;
-        Node &Build() = delete;
-    };
-
-    /*После вызова StartArray и серии Value следует не Value, не StartDict, не StartArray и не EndArray.*/
-    struct ArrayValueContext : BaseContext {
-        ArrayValueContext(Builder &builder) : BaseContext(builder) {}
-
-        KeyContext Key(std::string key) = delete;
-        ArrayValueContext Value(Node::Value value);
-        // DictItemContext StartDict() = delete;
-        Builder& EndDict() = delete;
-        // ArrayItemContext StartArray() = delete;
-        // Builder &EndArray() = delete;
         Node &Build() = delete;
     };
 } // namespace json

@@ -25,16 +25,16 @@ namespace transport {
          * - указатели на ноды с записями маршрутов складывает в вектор buses_
          */
         void JsonReader::ReadBaseRequests(const Node &node, TransportCatalogue &catalogue) {
-            const Array &base_fill_array = node.AsDict().at(request_type_fill_).AsArray();
+            const Array &base_fill_array = node.AsMap().at(request_type_fill_).AsArray();
             for (const Node &fill_node : base_fill_array) {
-                if (fill_node.AsDict().at(type_).AsString() == stop_type_) { // обработка записей с остановками
-                    catalogue.AddStop(fill_node.AsDict().at(name_).AsString(),
-                                      {fill_node.AsDict().at(stop_lat_).AsDouble(), fill_node.AsDict().at(stop_long_).AsDouble()});
-                    if (fill_node.AsDict().count(stop_road_dist_)) {
-                        stop_distances_.emplace_back(std::make_pair(fill_node.AsDict().at(name_).AsString(),
-                                                                    std::addressof(fill_node.AsDict().at(stop_road_dist_))));
+                if (fill_node.AsMap().at(type_).AsString() == stop_type_) { // обработка записей с остановками
+                    catalogue.AddStop(fill_node.AsMap().at(name_).AsString(),
+                                      {fill_node.AsMap().at(stop_lat_).AsDouble(), fill_node.AsMap().at(stop_long_).AsDouble()});
+                    if (fill_node.AsMap().count(stop_road_dist_)) {
+                        stop_distances_.emplace_back(std::make_pair(fill_node.AsMap().at(name_).AsString(),
+                                                                    std::addressof(fill_node.AsMap().at(stop_road_dist_))));
                     }
-                } else if (fill_node.AsDict().at(type_).AsString() == bus_type_) { // сохранение ссылок на записи с маршрутами
+                } else if (fill_node.AsMap().at(type_).AsString() == bus_type_) { // сохранение ссылок на записи с маршрутами
                     buses_.emplace_back(std::addressof(fill_node));
                 }
             }
@@ -42,7 +42,7 @@ namespace transport {
 
         void JsonReader::FillStopDistances(TransportCatalogue& catalogue) {
             for(const auto& [stop_from, road_dist_node] : stop_distances_) {
-                for(const auto& [stop_to, node_dist] : road_dist_node->AsDict()) {
+                for(const auto& [stop_to, node_dist] : road_dist_node->AsMap()) {
                     catalogue.AddStopDistances(stop_from, stop_to, static_cast<size_t>(node_dist.AsInt()));
                 }
             }
@@ -52,27 +52,27 @@ namespace transport {
             for(size_t i = 0; i != buses_.size(); ++i) {
                 bool is_roundtrip = true;
                 std::vector<std::string_view> stop_names;
-                for (const Node &node_stop : buses_[i]->AsDict().at(bus_stops_).AsArray()) {
+                for (const Node &node_stop : buses_[i]->AsMap().at(bus_stops_).AsArray()) {
                     stop_names.emplace_back(node_stop.AsString());
                 }
-                if (!buses_[i]->AsDict().at(bus_roundtrip_).AsBool()) { // нужно замкнуть маршрут
+                if (!buses_[i]->AsMap().at(bus_roundtrip_).AsBool()) { // нужно замкнуть маршрут
                     is_roundtrip = false;
                     stop_names.insert(stop_names.end(), std::next(stop_names.rbegin()), stop_names.rend());
                 }
-                catalogue.AddBus(buses_[i]->AsDict().at(name_).AsString(), stop_names, is_roundtrip);
+                catalogue.AddBus(buses_[i]->AsMap().at(name_).AsString(), stop_names, is_roundtrip);
             }
         }
 
         const std::vector<StatRequest>& JsonReader::FillStatRequests(const json::Document &document) {
             const Node &node = document.GetRoot();
-            const Array &requests_array = node.AsDict().at(request_type_stat_).AsArray();
+            const Array &requests_array = node.AsMap().at(request_type_stat_).AsArray();
 
             for (const Node &req_node : requests_array) {
                 std::string name_string;
-                if (req_node.AsDict().count(name_)) {
-                    name_string = req_node.AsDict().at(name_).AsString();
+                if (req_node.AsMap().count(name_)) {
+                    name_string = req_node.AsMap().at(name_).AsString();
                 }
-                requests_.emplace_back(StatRequest(req_node.AsDict().at(id_).AsInt(), req_node.AsDict().at(type_).AsString(), name_string));
+                requests_.emplace_back(StatRequest(req_node.AsMap().at(id_).AsInt(), req_node.AsMap().at(type_).AsString(), name_string));
                 }
             return requests_;
         }
@@ -101,7 +101,7 @@ namespace transport {
             const Node &node = document.GetRoot();
             map_renderer::RenderSettings map_render_settings;
 
-            const Dict &settings_dict = node.AsDict().at(str_render_settings_).AsDict();
+            const Dict &settings_dict = node.AsMap().at(str_render_settings_).AsMap();
             if (settings_dict.count(str_width_)) {
                 map_render_settings.width = settings_dict.at(str_width_).AsDouble();
             }

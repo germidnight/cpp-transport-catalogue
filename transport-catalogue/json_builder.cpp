@@ -16,7 +16,7 @@ namespace json {
     KeyContext Builder::Key(const std::string &key) {
         ThrowIfReadyObject("Key()");
 
-        if (nodes_stack_.back()->IsDict()) {
+        if (nodes_stack_.back()->IsMap()) {
             if(!last_key_.has_value()) {
                 std::get<Dict>(nodes_stack_.back()->GetValue())[key];
                 last_key_ = key;
@@ -37,7 +37,7 @@ namespace json {
             std::get<Array>(nodes_stack_.back()->GetValue()).emplace_back(temp_node);
             return *this;
         }
-        if (nodes_stack_.back()->IsDict()) {
+        if (nodes_stack_.back()->IsMap()) {
             Dict &temp = std::get<Dict>(nodes_stack_.back()->GetValue());
             if (last_key_.has_value() && (temp.count(last_key_.value()) > 0)) {
                 temp.at(last_key_.value()).GetValue() = value;
@@ -58,7 +58,7 @@ namespace json {
         if(nodes_stack_.back()->IsArray()) {
             auto &temp_node = std::get<Array>(nodes_stack_.back()->GetValue()).emplace_back(Node{Dict{}});
             nodes_stack_.emplace_back(&temp_node);
-        } else if (nodes_stack_.back()->IsDict()) {
+        } else if (nodes_stack_.back()->IsMap()) {
             Dict &dict_temp = std::get<Dict>(nodes_stack_.back()->GetValue());
             if ((last_key_.has_value()) && (dict_temp.count(last_key_.value()) > 0)) {
                 auto &temp_node = dict_temp.at(last_key_.value()) = std::move(Node{Dict{}});
@@ -74,7 +74,7 @@ namespace json {
     }
     Builder &Builder::EndDict() {
         ThrowIfReadyObject("EndDict()");
-        if (!(nodes_stack_.back()->IsDict())) {
+        if (!(nodes_stack_.back()->IsMap())) {
             throw std::logic_error("Calling EndDict() method for wrong container / Вызов EndDict() не для контейнера Dict");
         }
         nodes_stack_.pop_back();
@@ -86,7 +86,7 @@ namespace json {
         if (nodes_stack_.back()->IsArray()) {
             auto &temp_node = std::get<Array>(nodes_stack_.back()->GetValue()).emplace_back(Node{Array{}});
             nodes_stack_.emplace_back(&temp_node);
-        } else if (nodes_stack_.back()->IsDict()) {
+        } else if (nodes_stack_.back()->IsMap()) {
             Dict &temp_dict = std::get<Dict>(nodes_stack_.back()->GetValue());
             if ((last_key_.has_value()) && (temp_dict.count(last_key_.value()) > 0)) {
                 auto &temp_node = temp_dict.at(last_key_.value()) = std::move(Node{Array{}});
@@ -130,11 +130,7 @@ namespace json {
         return builder_.Value(std::move(value));
     }
 
-    ArrayValueContext ArrayItemContext::Value(Node::Value value) {
-        return builder_.Value(std::move(value));
-    }
-
-    ArrayValueContext ArrayValueContext::Value(Node::Value value) {
+    ArrayItemContext ArrayItemContext::Value(Node::Value value) {
         return builder_.Value(std::move(value));
     }
 

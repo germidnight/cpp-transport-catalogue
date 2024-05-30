@@ -100,9 +100,9 @@ namespace transport {
             json::Document GetStatistics();
 
         private:
-            void BusStatRequest(const json_reader::StatRequest &, json::Builder &);
-            void StopStatRequest(const json_reader::StatRequest &, json::Builder &);
-            void MapStatRequest(const json_reader::StatRequest &, json::Builder &);
+            void BusStatRequest(const json_reader::StatRequest &req, json::Builder &answer_arr);
+            void StopStatRequest(const json_reader::StatRequest &req, json::Builder &answer_arr);
+            void MapStatRequest(const json_reader::StatRequest &req, json::Builder &answer_arr);
 
             const std::vector<json_reader::StatRequest> requests_;
             const catalogue::TransportCatalogue &catalogue_;
