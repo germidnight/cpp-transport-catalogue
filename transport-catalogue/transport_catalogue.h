@@ -65,6 +65,11 @@ namespace transport {
 
             std::vector<std::string> GetAllBusNames() const;
 
+            /* Расстояние между остановками исключительно рядом стоящими */
+            size_t GetDistanceBetwenStops(Stop *stop_from, Stop *stop_to) const;
+
+            size_t GetStopCount() const;
+
         private:
             std::deque<Stop> stops_;
             std::deque<Bus> buses_;

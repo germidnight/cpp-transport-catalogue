@@ -2,6 +2,7 @@
 #include "json_reader.h"
 #include "map_renderer.h"
 #include "request_handler.h"
+#include "transport_router.h"
 
 #include <iostream>
 
@@ -17,12 +18,14 @@ int main() {
     fill_catalogue.FillTransportCatalogue(document, catalogue);
 
     // считать настройки построения карты
-    const map_renderer::RenderSettings settings = fill_catalogue.FillRenderSettings(document);
+    const map_renderer::RenderSettings draw_settings = fill_catalogue.FillRenderSettings(document);
+
+    const transport_router::RouterSetting router_settings = fill_catalogue.FillRouterSettings(document);
 
     // Выполнить запросы к справочнику, находящиеся в массиве "stat_requests", построив JSON-массив
     const std::vector<json_reader::StatRequest> &stat_requests = fill_catalogue.FillStatRequests(document);
 
-    request_handler::RequestHandler req_hndlr(stat_requests, catalogue, settings);
+    request_handler::RequestHandler req_hndlr(stat_requests, catalogue, draw_settings, router_settings);
 
     json::Print(req_hndlr.GetStatistics(), std::cout);
 }

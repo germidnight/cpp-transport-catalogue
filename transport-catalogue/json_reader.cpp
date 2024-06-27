@@ -25,16 +25,16 @@ namespace transport {
          * - указатели на ноды с записями маршрутов складывает в вектор buses_
          */
         void JsonReader::ReadBaseRequests(const Node &node, TransportCatalogue &catalogue) {
-            const Array &base_fill_array = node.AsMap().at(request_type_fill_).AsArray();
+            const Array &base_fill_array = node.AsMap().at(str_request_type_fill_).AsArray();
             for (const Node &fill_node : base_fill_array) {
-                if (fill_node.AsMap().at(type_).AsString() == stop_type_) { // обработка записей с остановками
-                    catalogue.AddStop(fill_node.AsMap().at(name_).AsString(),
-                                      {fill_node.AsMap().at(stop_lat_).AsDouble(), fill_node.AsMap().at(stop_long_).AsDouble()});
-                    if (fill_node.AsMap().count(stop_road_dist_)) {
-                        stop_distances_.emplace_back(std::make_pair(fill_node.AsMap().at(name_).AsString(),
-                                                                    std::addressof(fill_node.AsMap().at(stop_road_dist_))));
+                if (fill_node.AsMap().at(str_type_).AsString() == str_stop_type_) { // обработка записей с остановками
+                    catalogue.AddStop(fill_node.AsMap().at(str_name_).AsString(),
+                                      {fill_node.AsMap().at(str_stop_lat_).AsDouble(), fill_node.AsMap().at(str_stop_long_).AsDouble()});
+                    if (fill_node.AsMap().count(str_stop_road_dist_)) {
+                        stop_distances_.emplace_back(std::make_pair(fill_node.AsMap().at(str_name_).AsString(),
+                                                                    std::addressof(fill_node.AsMap().at(str_stop_road_dist_))));
                     }
-                } else if (fill_node.AsMap().at(type_).AsString() == bus_type_) { // сохранение ссылок на записи с маршрутами
+                } else if (fill_node.AsMap().at(str_type_).AsString() == str_bus_type_) { // сохранение ссылок на записи с маршрутами
                     buses_.emplace_back(std::addressof(fill_node));
                 }
             }
@@ -52,27 +52,40 @@ namespace transport {
             for(size_t i = 0; i != buses_.size(); ++i) {
                 bool is_roundtrip = true;
                 std::vector<std::string_view> stop_names;
-                for (const Node &node_stop : buses_[i]->AsMap().at(bus_stops_).AsArray()) {
+                for (const Node &node_stop : buses_[i]->AsMap().at(str_bus_stops_).AsArray()) {
                     stop_names.emplace_back(node_stop.AsString());
                 }
-                if (!buses_[i]->AsMap().at(bus_roundtrip_).AsBool()) { // нужно замкнуть маршрут
+                if (!buses_[i]->AsMap().at(str_bus_roundtrip_).AsBool()) { // нужно замкнуть маршрут
                     is_roundtrip = false;
                     stop_names.insert(stop_names.end(), std::next(stop_names.rbegin()), stop_names.rend());
                 }
-                catalogue.AddBus(buses_[i]->AsMap().at(name_).AsString(), stop_names, is_roundtrip);
+                catalogue.AddBus(buses_[i]->AsMap().at(str_name_).AsString(), stop_names, is_roundtrip);
             }
         }
 
         const std::vector<StatRequest>& JsonReader::FillStatRequests(const json::Document &document) {
             const Node &node = document.GetRoot();
-            const Array &requests_array = node.AsMap().at(request_type_stat_).AsArray();
+            const Array &requests_array = node.AsMap().at(str_request_type_stat_).AsArray();
 
             for (const Node &req_node : requests_array) {
                 std::string name_string;
-                if (req_node.AsMap().count(name_)) {
-                    name_string = req_node.AsMap().at(name_).AsString();
+                std::string from_string;
+                std::string to_string;
+                if (req_node.AsMap().count(str_name_)) {
+                    name_string = req_node.AsMap().at(str_name_).AsString();
                 }
-                requests_.emplace_back(StatRequest(req_node.AsMap().at(id_).AsInt(), req_node.AsMap().at(type_).AsString(), name_string));
+                if (req_node.AsMap().count(str_from_)) {
+                    from_string = req_node.AsMap().at(str_from_).AsString();
+                }
+                if (req_node.AsMap().count(str_to_)) {
+                    to_string = req_node.AsMap().at(str_to_).AsString();
+                }
+
+                requests_.emplace_back(StatRequest{req_node.AsMap().at(str_id_).AsInt(),
+                                                    req_node.AsMap().at(str_type_).AsString(),
+                                                    name_string,
+                                                    from_string,
+                                                    to_string});
                 }
             return requests_;
         }
@@ -147,6 +160,22 @@ namespace transport {
                 }
             }
             return map_render_settings;
+        }
+
+        transport_router::RouterSetting JsonReader::FillRouterSettings(const json::Document &document) {
+            const Node &node = document.GetRoot();
+            transport_router::RouterSetting router_settings;
+
+            const Dict &settings_dict = node.AsMap().at(str_router_settings).AsMap();
+            if (settings_dict.count(str_bus_wait_time_)) {
+                router_settings.bus_wait_time = settings_dict.at(str_bus_wait_time_).AsInt();
+            }
+            if (settings_dict.count(str_bus_velocity_)) {
+                /* Скорость переводим из км/ч в м/мин */
+                router_settings.bus_velocity = settings_dict.at(str_bus_velocity_).AsDouble() * 1000.0 / 60.0;
+            }
+
+            return router_settings;
         }
 
     } // namespace json_reader

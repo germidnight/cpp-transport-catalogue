@@ -1,4 +1,4 @@
-/* класс транспортного справочника */
+/* реализация функций класса транспортного справочника */
 #include "transport_catalogue.h"
 
 #include <algorithm>
@@ -144,6 +144,18 @@ namespace transport {
                 all_bus_names.emplace_back(bus.name);
             }
             return all_bus_names;
+        }
+
+        /* Расстояние между остановками исключительно рядом стоящими */
+        size_t TransportCatalogue::GetDistanceBetwenStops(Stop *stop_from, Stop *stop_to) const {
+            if (stops_dist_.count({stop_from, stop_to}) > 0) {
+                return stops_dist_.at({stop_from, stop_to});
+            }
+            return 0;
+        }
+
+        size_t TransportCatalogue::GetStopCount() const {
+            return stops_.size();
         }
     } // конец namespace catalogue
 } // конец namespace transport

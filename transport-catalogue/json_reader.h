@@ -5,7 +5,8 @@
  * {
  *   "base_requests": [ ... ],
  *   "render_settings": { ... },
- *   "stat_requests": [ ... ]
+ *   "stat_requests": [ ... ],
+ *   "routing_settings": { ... }
  * }
  * Это словарь, содержащий ключи:
  * 1) base_requests — массив с описанием автобусных маршрутов и остановок,
@@ -30,7 +31,7 @@
  * - road_distances — словарь, задающий дорожное расстояние от этой остановки до соседних.
  * Каждый ключ в этом словаре — название соседней остановки, значение — целочисленное расстояние в метрах.
  *
- * 2) Пример описания автобусного маршрута:
+ * 2) Описание автобусного маршрута:
  * {
  *   "type": "Bus",
  *   "name": "Номер автобуса",
@@ -72,9 +73,22 @@
  * - в массиве из четырёх элементов: три целых числа в диапазоне от [0, 255] и одно вещественное число
  * в диапазоне от [0.0, 1.0]. Они задают составляющие red, green, blue и opacity цвета формата svg::Rgba.
  * Цвет, заданный как [255, 200, 23, 0.85], должен быть выведен в SVG как rgba(255,200,23,0.85).
+ *
+ * 4) Ключ routing_settings, значение которого — словарь с двумя ключами:
+ * - bus_wait_time — время ожидания автобуса на остановке, в минутах. Значение — целое число от 1 до 1000.
+ * Считайте, что когда бы человек ни пришёл на остановку и какой бы ни была эта остановка, он будет ждать любой автобус в точности указанное количество минут.
+ * - bus_velocity — скорость автобуса, в км/ч. Значение — вещественное число от 1 до 1000.
+ * Считайте, что скорость любого автобуса постоянна и в точности равна указанному числу. Время стоянки на остановках не учитывается, время разгона и торможения тоже.
+ * Пример:
+ * "routing_settings": {
+ *       "bus_wait_time": 6,
+ *       "bus_velocity": 40
+ * }
+ * Данная конфигурация задаёт время ожидания, равным 6 минутам, и скорость автобусов, равной 40 километрам в час.
  */
 #include "json.h"
 #include "transport_catalogue.h"
+#include "transport_router.h"
 #include "map_renderer.h"
 
 #include <map>
@@ -85,24 +99,30 @@
 namespace transport {
     namespace json_reader {
         struct StatRequest {
-            StatRequest(int val_id, std::string val_type, std::string val_name)
-                        : id(val_id), type(val_type), name(val_name) {}
+            StatRequest(/*идентификатор запроса*/ int val_id,
+                        /*тип запроса*/ std::string val_type,
+                        /*имя автобуса или остановки*/ std::string val_name,
+                        /*для запроса Route начальная остановка маршрута*/ std::string val_from,
+                        /*для запроса Route конечная остановка маршрута*/ std::string val_to)
+                : id(val_id), type(val_type), name(val_name), from(val_from), to(val_to) {}
             int id = 0;
             std::string type;
             std::string name;
+            std::string from;
+            std::string to;
         };
 
         class JsonReader {
         public:
             /*
              * Наполняет данными транспортный справочник, из json::Document в три прохода:
-             * 1) пробегает весь JSON документ:
+             * 1) пробегает весь JSON документ (ReadBaseRequests):
              *          - вносит в каталог записи "Stop" без расстояний;
              *          - ссылки на ноды с массивами расстояний до остановок складываем в вектор stop_distances_;
              *          - ссылки на ноды с записями маршрутов в вектор buses_;
              *          - ссылки на ноды с запросами в вектор requests_;
-             * 2) по вектору stop_distances_ вносит в каталог расстояния до остановок;
-             * 3) по вектору buses_ вносит в каталог информацию о маршрутах
+             * 2) по вектору stop_distances_ вносит в каталог расстояния до остановок (FillStopDistances);
+             * 3) по вектору buses_ вносит в каталог информацию о маршрутах (FillBusses)
              * Возвращает вектор с ссылками на ноды с запросами
              */
             void FillTransportCatalogue(json::Document &document, catalogue::TransportCatalogue &catalogue);
@@ -113,11 +133,14 @@ namespace transport {
             /* --------------------- запросы складываем в вектор requests_, он пойдёт в request+handler.cpp ---------------------- */
             const std::vector<StatRequest>& FillStatRequests(const json::Document &document);
 
+            /* --------------------- настройки складываем в структуру map_render_settings_, она пойдёт в map_renderer.cpp ---------------------- */
+            transport_router::RouterSetting FillRouterSettings(const json::Document &document);
+
         private:
             /* --------------------- Обрабатываем запросы на пополнение базы ---------------------- */
-            void ReadBaseRequests(const json::Node &node, catalogue::TransportCatalogue &catalogue);    // первый проход
-            void FillStopDistances(catalogue::TransportCatalogue &catalogue);                           // второй проход
-            void FillBusses(catalogue::TransportCatalogue &catalogue);                                  // третий проход
+            void ReadBaseRequests(const json::Node &node, catalogue::TransportCatalogue &catalogue);
+            void FillStopDistances(catalogue::TransportCatalogue &catalogue);
+            void FillBusses(catalogue::TransportCatalogue &catalogue);
 
             svg::Color WhatColor(const json::Node& clr_node);
 
@@ -125,21 +148,21 @@ namespace transport {
             std::vector<const json::Node*> buses_;
             std::vector<StatRequest> requests_;
 
-            const std::string request_type_fill_ = "base_requests";
-            const std::string request_type_stat_ = "stat_requests";
+            const std::string str_request_type_fill_ = "base_requests";
+            const std::string str_request_type_stat_ = "stat_requests";
 
-            const std::string type_ = "type";
-            const std::string name_ = "name";
-            const std::string id_ = "id";
+            const std::string str_type_ = "type";
+            const std::string str_name_ = "name";
+            const std::string str_id_ = "id";
 
-            const std::string stop_type_ = "Stop";
-            const std::string stop_lat_ = "latitude";
-            const std::string stop_long_ = "longitude";
-            const std::string stop_road_dist_ = "road_distances";
+            const std::string str_stop_type_ = "Stop";
+            const std::string str_stop_lat_ = "latitude";
+            const std::string str_stop_long_ = "longitude";
+            const std::string str_stop_road_dist_ = "road_distances";
 
-            const std::string bus_type_ = "Bus";
-            const std::string bus_stops_ = "stops";
-            const std::string bus_roundtrip_ = "is_roundtrip";
+            const std::string str_bus_type_ = "Bus";
+            const std::string str_bus_stops_ = "stops";
+            const std::string str_bus_roundtrip_ = "is_roundtrip";
 
             const std::string str_render_settings_ = "render_settings";
             const std::string str_width_ = "width";
@@ -154,6 +177,13 @@ namespace transport {
             const std::string str_underlayer_color_ = "underlayer_color";
             const std::string str_underlayer_width_ = "underlayer_width";
             const std::string str_color_palette_ = "color_palette";
+
+            const std::string str_router_settings = "routing_settings";
+            const std::string str_bus_wait_time_ = "bus_wait_time";
+            const std::string str_bus_velocity_ = "bus_velocity";
+
+            const std::string str_from_ = "from";
+            const std::string str_to_ = "to";
         };
 
     } // namespace json_reader
